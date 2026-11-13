@@ -69,6 +69,7 @@ authRouter.post('/login', async (req, res, next) => {
 
 authRouter.get('/google/url', async (_req, res, next) => {
   try {
+    if (!env.ALLOW_GOOGLE_LOGIN) return res.status(403).json({ code: 'GOOGLE_LOGIN_DISABLED', message: 'Google sign-in is disabled.' })
     const config = await prisma.providerConfig.findFirstOrThrow({ where: { userId: null, provider: 'google_drive', status: 'active' }, orderBy: { createdAt: 'desc' } })
     const state = randomToken()
     await prisma.oauthState.create({ data: { providerConfigId: config.id, flow: 'login', stateHash: hashToken(state), expiresAt: new Date(Date.now() + 10 * 60_000) } })
@@ -88,6 +89,7 @@ authRouter.get('/google/url', async (_req, res, next) => {
 
 authRouter.get('/google/callback', async (req, res) => {
   try {
+    if (!env.ALLOW_GOOGLE_LOGIN) return res.redirect(`${env.FRONTEND_URL}/login?error=google_login_disabled`)
     const query = z.object({ code: z.string(), state: z.string() }).parse(req.query)
     const oauthState = await prisma.oauthState.findUniqueOrThrow({ where: { stateHash: hashToken(query.state) }, include: { providerConfig: true } })
     if (oauthState.flow !== 'login' || oauthState.usedAt || oauthState.expiresAt < new Date()) return res.redirect(`${env.FRONTEND_URL}/google-auth?status=error`)
@@ -157,6 +159,7 @@ authRouter.get('/google/callback', async (req, res) => {
 
 authRouter.post('/google/exchange', async (req, res, next) => {
   try {
+    if (!env.ALLOW_GOOGLE_LOGIN) return res.status(403).json({ code: 'GOOGLE_LOGIN_DISABLED', message: 'Google sign-in is disabled.' })
     const body = googleExchangeSchema.parse(req.body)
     const handoff = await prisma.authHandoff.findFirst({ where: { tokenHash: hashToken(body.token), usedAt: null, expiresAt: { gt: new Date() } }, include: { user: true } })
     if (!handoff) return res.status(401).json({ code: 'AUTH_GOOGLE_HANDOFF_INVALID', message: 'Google login session expired.' })

@@ -18,6 +18,11 @@ const envSchema = z.object({
     .optional()
     .default('true')
     .transform((value) => value.trim().toLowerCase() !== 'false'),
+  ALLOW_GOOGLE_LOGIN: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((value) => value.trim().toLowerCase() !== 'false'),
 })
 
 export const env = envSchema.parse(process.env)
