@@ -13,6 +13,11 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(30),
   MAX_UPLOAD_BYTES: z.coerce.number().default(5 * 1024 * 1024 * 1024),
   RECAPTCHA_SECRET_KEY: z.string().optional(),
+  ALLOW_REGISTRATION: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((value) => value.trim().toLowerCase() !== 'false'),
 })
 
 export const env = envSchema.parse(process.env)
